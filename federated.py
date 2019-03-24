@@ -19,8 +19,11 @@ class FederatedManager:
         self.model = self.make_model()
         self.model.train(False)
         self.loss_fn = loss_fn
-        self.Xtest = torch.Tensor(Xtest)
-        self.ytest = torch.Tensor(ytest)
+        # Our notebook handles this
+        # self.Xtest = torch.Tensor(Xtest)
+        # self.ytest = torch.Tensor(ytest)
+        self.Xtest = Xtest
+        self.ytest = ytest
         self.workers = [
             FederatedWorker(self, dl, loss_fn, n_epochs=n_epochs, *args, **kwargs)
             for dl in dataloaders
@@ -119,8 +122,10 @@ class FederatedWorker:
                 train_loss = self.loss_fn(ypred, y)
                 train_loss.backward()
                 optimizer.step()
-                self.loss_history["test"].append(self.manager.evaluate_loss(self.model))
                 self.loss_history["train"].append(train_loss.item())
+                # only do this once per federated round, expensive
+                # self.loss_history["test"].append(self.manager.evaluate_loss(self.model))
+                if i%100==0: print(i, self.loss_history["train"][-1])
         return {
             "state_dict": self.model.state_dict(),
             "n_samples": self.n_samples
